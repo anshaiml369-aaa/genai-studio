@@ -1,5 +1,7 @@
 # Kalpana · GenAI Studio (कल्पना)
 
+![Kalpana home page](docs/screenshot.png)
+
 > **Imagine it. Say it. Watch it move.**
 > One web app for every kind of generative AI: **text, voice, images and video**.
 
