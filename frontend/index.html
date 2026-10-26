@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kalpana · GenAI Studio</title>
+  <meta name="description" content="Chat, talk, create images and videos with AI — one studio.">
+  <link rel="icon" href="/assets/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+Devanagari:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <!-- Icon set (drawn once, used everywhere with <use href="#i-name">) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+      <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4"/></symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+      <symbol id="i-clip" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+      <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></symbol>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+      <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8l-6 4 6 4z"/></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+      <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+      <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.2"/><circle cx="15.5" cy="15.5" r="1.2"/><circle cx="12" cy="12" r="1.2"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Background: moving aurora + film grain -->
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cursor" aria-hidden="true"><span class="cursor-dot"></span><span class="cursor-ring"></span></div>
+
+  <!-- Navigation -->
+  <header class="nav">
+    <a href="#home" class="brand" data-link>
+      <span class="brand-orb"></span>
+      <span class="brand-name">Kalpana</span>
+      <span class="brand-deva">कल्पना</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#home" data-link>Home</a>
+      <a href="#chat" data-link>Chat</a>
+      <a href="#studio" data-link>Video Studio</a>
+      <a href="#gallery" data-link>Gallery</a>
+    </nav>
+    <a href="#chat" class="btn btn-glow nav-cta" data-link>Start creating <svg class="ic"><use href="#i-arrow"/></svg></a>
+  </header>
+
+  <!-- Bottom tab bar (phones only) -->
+  <nav class="tabbar glass" aria-label="Sections">
+    <a href="#home" data-link><svg class="ic"><use href="#i-home"/></svg>Home</a>
+    <a href="#chat" data-link><svg class="ic"><use href="#i-chat"/></svg>Chat</a>
+    <a href="#studio" data-link><svg class="ic"><use href="#i-video"/></svg>Studio</a>
+    <a href="#gallery" data-link><svg class="ic"><use href="#i-grid"/></svg>Gallery</a>
+  </nav>
+
+  <main>
+    <!-- ======================= HOME ======================= -->
+    <section class="view" id="view-home">
+      <div class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow reveal"><span class="pulse"></span> GenAI Studio · Python + FastAPI</span>
+          <h1 class="display reveal">Imagine it.<br><em>Say it.</em><br>Watch it move.</h1>
+          <p class="lead reveal">One studio for every kind of AI: chat with a brain that sees images, talk with your voice,
+            paint pictures, and direct short films — all from a single prompt.</p>
+          <div class="hero-ctas reveal">
+            <a href="#chat" class="btn btn-glow btn-lg" data-link><svg class="ic"><use href="#i-chat"/></svg> Start chatting</a>
+            <a href="#studio" class="btn btn-ghost btn-lg" data-link><svg class="ic"><use href="#i-video"/></svg> Open Video Studio</a>
+          </div>
+          <div class="hero-status reveal" id="hero-status"></div>
+        </div>
+
+        <div class="hero-visual reveal" aria-hidden="true">
+          <div class="orb"></div>
+          <div class="glass demo-card">
+            <div class="demo-top"><span></span><span></span><span></span><b>kalpana — studio</b></div>
+            <div class="demo-prompt"><span class="mono muted">prompt ›</span> <span id="typewriter"></span><i class="caret"></i></div>
+            <div class="demo-frame"><div class="demo-scan"></div><div class="demo-sun"></div><div class="demo-hills"></div></div>
+            <div class="demo-progress"><span id="demo-bar"></span></div>
+            <div class="demo-meta mono"><span id="demo-stage">Directing scene 1</span><span id="demo-pct">0%</span></div>
+          </div>
+          <div class="glass float-chip chip-a"><svg class="ic"><use href="#i-wave"/></svg> Voice → text in 0.4s</div>
+          <div class="glass float-chip chip-b"><svg class="ic"><use href="#i-image"/></svg> 1 prompt → 1 image</div>
+        </div>
+      </div>
+
+      <div class="marquee" aria-label="Technologies used">
+        <div class="marquee-track">
+          <span>Python</span><span>FastAPI</span><span>OpenAI GPT</span><span>Groq Whisper</span><span>OpenAI TTS</span>
+          <span>Gemini</span><span>Runway</span><span>ffmpeg</span><span>MoviePy</span><span>Server-Sent Events</span><span>HTML · CSS · JS</span>
+          <span>Python</span><span>FastAPI</span><span>OpenAI GPT</span><span>Groq Whisper</span><span>OpenAI TTS</span>
+          <span>Gemini</span><span>Runway</span><span>ffmpeg</span><span>MoviePy</span><span>Server-Sent Events</span><span>HTML · CSS · JS</span>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="section-head reveal">
+          <span class="kicker mono">01 — Capabilities</span>
+          <h2 class="display-2">Four senses. <em>One studio.</em></h2>
+        </div>
+        <div class="cards">
+          <article class="glass card spot reveal"><div class="card-icon"><svg class="ic"><use href="#i-chat"/></svg></div>
+            <h3>Text</h3><p>Streaming answers with memory, markdown and code — plus 4 personalities from Teacher to Hinglish buddy.</p><span class="tag mono">gpt-5.4-mini</span></article>
+          <article class="glass card spot reveal"><div class="card-icon"><svg class="ic"><use href="#i-wave"/></svg></div>
+            <h3>Voice</h3><p>Speak instead of typing and hear every reply in one of 10 natural voices.</p><span class="tag mono">Whisper · TTS</span></article>
+          <article class="glass card spot reveal"><div class="card-icon"><svg class="ic"><use href="#i-image"/></svg></div>
+            <h3>Image</h3><p>Show it a photo to understand — or ask it to paint anything you can describe.</p><span class="tag mono">Vision · Gemini · GPT-Image</span></article>
+          <article class="glass card spot reveal"><div class="card-icon"><svg class="ic"><use href="#i-video"/></svg></div>
+            <h3>Video</h3><p>Text → video, image → video and multi-scene AI stories with a narrator.</p><span class="tag mono">Runway · Motion Preview</span></article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head reveal">
+          <span class="kicker mono">02 — How it works</span>
+          <h2 class="display-2">From a sentence to a <em>scene.</em></h2>
+        </div>
+        <ol class="pipeline">
+          <li class="glass reveal"><span class="step mono">01</span><h4>You ask</h4><p>Type, speak or drop an image into the chat.</p></li>
+          <li class="glass reveal"><span class="step mono">02</span><h4>AI decides</h4><p>The model picks a tool: answer, paint or film (function calling).</p></li>
+          <li class="glass reveal"><span class="step mono">03</span><h4>Engines create</h4><p>Python calls Gemini, OpenAI, Groq and Runway in the background.</p></li>
+          <li class="glass reveal"><span class="step mono">04</span><h4>You watch</h4><p>Results stream back live — words, pictures, video and voice.</p></li>
+        </ol>
+      </section>
+
+      <section class="section stats">
+        <div class="stat reveal"><b data-count="5">0</b><span>AI APIs connected</span></div>
+        <div class="stat reveal"><b data-count="4">0</b><span>Modalities</span></div>
+        <div class="stat reveal"><b data-count="10">0</b><span>Natural voices</span></div>
+        <div class="stat reveal"><b data-count="3">0</b><span>Video modes</span></div>
+      </section>
+
+      <section class="section cta-band glass reveal">
+        <h2 class="display-2">Your imagination, <em>rendered.</em></h2>
+        <p class="muted">Start with a sentence. Kalpana handles the rest.</p>
+        <a href="#studio" class="btn btn-glow btn-lg" data-link><svg class="ic"><use href="#i-sparkles"/></svg> Create a video</a>
+      </section>
+
+      <footer class="footer mono">
+        <span>Kalpana · GenAI Studio — 2nd-year B.Tech project</span>
+        <span>Built with Python, FastAPI &amp; vanilla JS</span>
+      </footer>
+    </section>
+
+    <!-- ======================= CHAT ======================= -->
+    <section class="view app-view" id="view-chat" hidden>
+      <aside class="sidebar glass" id="sidebar">
+        <button class="btn btn-glow btn-block" id="new-chat"><svg class="ic"><use href="#i-plus"/></svg> New chat</button>
+        <div class="side-label mono">Conversations</div>
+        <ul class="conv-list" id="conv-list"></ul>
+        <div class="side-settings">
+          <div class="side-label mono">Assistant</div>
+          <label class="field"><span>Personality</span>
+            <select id="personality">
+              <option value="friendly">😊 Friendly assistant</option>
+              <option value="teacher">👩‍🏫 Patient teacher</option>
+              <option value="hinglish">🇮🇳 Hinglish buddy</option>
+              <option value="interviewer">💼 Interview coach</option>
+            </select></label>
+          <label class="field"><span>Voice</span><select id="voice"></select></label>
+          <label class="switch"><input type="checkbox" id="autospeak" checked><span class="track"></span> Speak replies aloud</label>
+          <div class="engine-list mono" id="engine-list"></div>
+        </div>
+      </aside>
+
+      <div class="chat-main">
+        <button class="icon-btn sidebar-toggle" id="sidebar-toggle" aria-label="Show conversations"><svg class="ic"><use href="#i-menu"/></svg></button>
+        <div class="messages" id="messages">
+          <div class="chat-empty" id="chat-empty">
+            <div class="orb orb-sm"></div>
+            <h2 class="display-2" id="greeting">Good evening.</h2>
+            <p class="muted">Ask anything, drop a photo, hold the mic — or ask me to create.</p>
+            <div class="suggestions">
+              <button class="suggestion glass" data-prompt="Explain recursion like I'm 10, with a tiny Python example"><svg class="ic"><use href="#i-chat"/></svg> Explain recursion like I'm 10</button>
+              <button class="suggestion glass" data-prompt="Draw a cute astronaut cat floating among colorful planets"><svg class="ic"><use href="#i-image"/></svg> Draw an astronaut cat</button>
+              <button class="suggestion glass" data-prompt="Make a video of ocean waves rolling onto a beach at golden sunset"><svg class="ic"><use href="#i-video"/></svg> Make a sunset beach video</button>
+              <button class="suggestion glass" data-prompt="Start a Python interview for a fresher. Ask me the first question."><svg class="ic"><use href="#i-zap"/></svg> Mock Python interview</button>
+            </div>
+          </div>
+        </div>
+
+        <form class="composer glass" id="composer">
+          <div class="attachments" id="attachments"></div>
+          <div class="recorder" id="recorder" hidden>
+            <span class="rec-dot"></span><canvas id="rec-wave" width="600" height="40"></canvas><span class="mono" id="rec-time">0:00</span>
+          </div>
+          <textarea id="input" rows="1" placeholder="Message Kalpana…  (Shift+Enter for a new line)"></textarea>
+          <div class="composer-row">
+            <div class="composer-tools">
+              <label class="icon-btn" title="Attach images"><svg class="ic"><use href="#i-clip"/></svg>
+                <input type="file" id="file-input" accept="image/*" multiple hidden></label>
+              <button type="button" class="icon-btn" id="mic-btn" title="Speak to type"><svg class="ic"><use href="#i-mic"/></svg></button>
+              <span class="hint mono" id="composer-hint">Enter to send</span>
+            </div>
+            <button type="submit" class="send-btn" id="send-btn" aria-label="Send"><svg class="ic"><use href="#i-send"/></svg></button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ======================= VIDEO STUDIO ======================= -->
+    <section class="view app-view studio" id="view-studio" hidden>
+      <div class="studio-panel glass">
+        <div class="segmented" id="studio-modes">
+          <button class="active" data-mode="text"><svg class="ic"><use href="#i-video"/></svg> Text → Video</button>
+          <button data-mode="image"><svg class="ic"><use href="#i-image"/></svg> Image → Video</button>
+          <button data-mode="story"><svg class="ic"><use href="#i-book"/></svg> AI Story</button>
+        </div>
+
+        <label class="dropzone" id="dropzone" hidden>
+          <input type="file" id="studio-image" accept="image/*" hidden>
+          <div class="dz-empty"><svg class="ic ic-lg"><use href="#i-upload"/></svg><b>Drop an image</b><span class="muted">or click to upload · PNG / JPG</span></div>
+          <img id="dz-preview" alt="" hidden>
+        </label>
+
+        <div class="prompt-box">
+          <textarea id="studio-prompt" rows="5" maxlength="1000" placeholder="Describe your scene… e.g. A small paper boat drifting down a rain-soaked street at dusk"></textarea>
+          <div class="prompt-tools">
+            <button type="button" class="chip-btn" id="inspire"><svg class="ic"><use href="#i-dice"/></svg> Inspire me</button>
+            <button type="button" class="chip-btn" id="enhance"><svg class="ic"><use href="#i-sparkles"/></svg> AI enhance</button>
+            <span class="mono muted count" id="prompt-count">0/1000</span>
+          </div>
+        </div>
+
+        <div class="story-box" id="story-box" hidden>
+          <div class="row-between"><span class="label">Scenes</span><span class="mono" id="scenes-val">3</span></div>
+          <input type="range" id="scenes" min="2" max="4" value="3">
+          <button type="button" class="btn btn-ghost btn-block" id="write-story"><svg class="ic"><use href="#i-book"/></svg> Write the story first (optional)</button>
+          <div class="scene-list" id="scene-list"></div>
+        </div>
+
+        <div class="label">Engine</div>
+        <div class="engine-cards" id="engine-cards">
+          <button class="engine-card active" data-engine="auto"><b>Auto</b><span>Runway, falls back to Motion Preview</span></button>
+          <button class="engine-card" data-engine="runway"><b>Runway</b><span>Real AI motion · paid credits</span></button>
+          <button class="engine-card" data-engine="motion"><b>Motion Preview</b><span>AI image + camera move · ~$0.01</span></button>
+        </div>
+
+        <div class="two-col">
+          <div><div class="label">Aspect ratio</div>
+            <div class="pills" id="ratios">
+              <button class="active" data-ratio="16:9"><i class="shape" style="--w:20px;--h:12px"></i>16:9</button>
+              <button data-ratio="9:16"><i class="shape" style="--w:10px;--h:16px"></i>9:16</button>
+              <button data-ratio="1:1"><i class="shape" style="--w:14px;--h:14px"></i>1:1</button>
+            </div></div>
+          <div><div class="label">Duration</div>
+            <div class="pills" id="durations"><button class="active" data-sec="5">5s</button><button data-sec="10">10s</button></div></div>
+        </div>
+
+        <div class="voice-box">
+          <label class="switch"><input type="checkbox" id="vo-toggle"><span class="track"></span> AI narrator voiceover</label>
+          <div class="vo-fields" id="vo-fields" hidden>
+            <select id="vo-voice"></select>
+            <input type="text" id="vo-text" placeholder="What should the narrator say?">
+          </div>
+        </div>
+
+        <button class="btn btn-glow btn-lg btn-block generate" id="generate"><svg class="ic"><use href="#i-sparkles"/></svg> Generate <span class="mono cost" id="cost"></span></button>
+      </div>
+
+      <div class="stage-wrap">
+        <div class="stage glass" id="stage">
+          <div class="stage-idle" id="stage-idle">
+            <div class="orb orb-sm"></div>
+            <h3 class="display-3">Your film appears here</h3>
+            <p class="muted">Write a prompt, pick an engine, press Generate.</p>
+          </div>
+          <div class="stage-run" id="stage-run" hidden>
+            <div class="ring" id="ring"><span class="mono" id="ring-pct">0%</span></div>
+            <b id="stage-label">Starting…</b>
+            <ol class="checklist mono" id="checklist">
+              <li data-step="plan">Plan scenes</li><li data-step="gen">Generate footage</li>
+              <li data-step="voice">Record narrator</li><li data-step="edit">Final cut</li>
+            </ol>
+            <span class="mono muted" id="elapsed">0:00</span>
+          </div>
+          <div class="stage-done" id="stage-done" hidden>
+            <video id="result-video" controls playsinline loop></video>
+            <div class="result-bar">
+              <div><b id="result-title"></b><span class="badge mono" id="result-engine"></span></div>
+              <a class="btn btn-ghost" id="result-download" download><svg class="ic"><use href="#i-download"/></svg> Download</a>
+            </div>
+            <p class="notice" id="result-notice" hidden></p>
+          </div>
+        </div>
+        <div class="label">Recent films</div>
+        <div class="recent" id="recent"></div>
+      </div>
+    </section>
+
+    <!-- ======================= GALLERY ======================= -->
+    <section class="view app-view gallery-view" id="view-gallery" hidden>
+      <div class="gallery-head">
+        <div><span class="kicker mono">Your creations</span><h2 class="display-2">Gallery</h2></div>
+        <div class="pills" id="gallery-filter">
+          <button class="active" data-filter="all"><svg class="ic"><use href="#i-grid"/></svg> All</button>
+          <button data-filter="image"><svg class="ic"><use href="#i-image"/></svg> Images</button>
+          <button data-filter="video"><svg class="ic"><use href="#i-video"/></svg> Videos</button>
+        </div>
+      </div>
+      <div class="masonry" id="masonry"></div>
+      <p class="muted gallery-empty" id="gallery-empty" hidden>Nothing yet — create something in Chat or the Video Studio.</p>
+    </section>
+  </main>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="icon-btn lb-close" id="lb-close" aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></button>
+    <div class="lb-body" id="lb-body"></div>
+    <div class="lb-actions">
+      <a class="btn btn-ghost" id="lb-download" download><svg class="ic"><use href="#i-download"/></svg> Download</a>
+      <button class="btn btn-ghost danger" id="lb-delete"><svg class="ic"><use href="#i-trash"/></svg> Delete</button>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+</body>
+</html>
