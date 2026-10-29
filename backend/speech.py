@@ -10,7 +10,7 @@ from openai import OpenAI
 
 import config
 
-openai_client = OpenAI(api_key=config.OPENAI_API_KEY)
+openai_client = OpenAI(api_key=config.OPENAI_API_KEY or "not-set")   # start without a key
 
 VOICES = ["coral", "nova", "alloy", "ash", "ballad", "echo", "fable", "onyx", "sage", "shimmer"]
 

@@ -19,7 +19,7 @@ from openai import OpenAI
 import config
 import media
 
-client = OpenAI(api_key=config.OPENAI_API_KEY)
+client = OpenAI(api_key=config.OPENAI_API_KEY or "not-set")   # start without a key; status shows chat off
 
 # personality -> (system prompt, voice style)
 PERSONALITIES = {
