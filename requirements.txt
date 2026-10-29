@@ -1,9 +1,8 @@
-fastapi>=0.115
-uvicorn[standard]>=0.30
-python-multipart>=0.0.9
-python-dotenv>=1.0
-openai>=1.51
-google-genai>=1.0
-runwayml>=5.0
-pillow>=10.0
-moviepy>=2.1
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.32
+python-dotenv==1.2.4
+openai==3.37.0
+google-genai==2.33.0
+pillow==11.3.0
+moviepy==2.2.1

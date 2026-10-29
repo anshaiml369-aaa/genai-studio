@@ -15,7 +15,7 @@ load_dotenv(BASE_DIR / ".env")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()   # brain, voice, images
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()       # fast speech-to-text (free)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()   # story writing, images
-RUNWAY_API_KEY = os.getenv("RUNWAY_API_KEY", "").strip()   # real AI video
+KLING_API_KEY = os.getenv("KLING_API_KEY", "").strip()     # realistic AI video
 
 # ---------- Models (override in .env if needed) ----------
 CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-5.4-mini")
@@ -25,8 +25,8 @@ TTS_MODEL = os.getenv("TTS_MODEL", "gpt-4o-mini-tts")
 GEMINI_TEXT_MODEL = os.getenv("GEMINI_TEXT_MODEL", "gemini-2.5-flash")
 GEMINI_IMAGE_MODEL = os.getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
 OPENAI_IMAGE_MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1-mini")
-RUNWAY_TEXT_MODEL = os.getenv("RUNWAY_TEXT_MODEL", "gen4.5")        # text -> video
-RUNWAY_IMAGE_MODEL = os.getenv("RUNWAY_IMAGE_MODEL", "gen4_turbo")  # image -> video
+KLING_MODEL = os.getenv("KLING_MODEL", "kling-v3")
+KLING_API = "https://api-singapore.klingai.com"
 
 # ---------- Folders (everything the app creates is saved here) ----------
 STORAGE = BASE_DIR / "storage"
@@ -42,8 +42,6 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 # ---------- Video options ----------
 RATIOS = {"16:9": (1280, 720), "9:16": (720, 1280), "1:1": (960, 960)}
 DURATIONS = [5, 10]
-# Approx. US$ per second for Runway (1 credit = $0.01) - check Runway's pricing page
-RUNWAY_PRICE = {RUNWAY_TEXT_MODEL: 0.12, RUNWAY_IMAGE_MODEL: 0.05}
 
 
 def to_url(path: Path) -> str:
@@ -58,7 +56,6 @@ def status() -> dict:
         "voice_in": "Groq" if GROQ_API_KEY else ("OpenAI" if OPENAI_API_KEY else None),
         "voice_out": bool(OPENAI_API_KEY),
         "image": [name for name, key in (("Gemini", GEMINI_API_KEY), ("OpenAI", OPENAI_API_KEY)) if key],
-        "video": (["Runway"] if RUNWAY_API_KEY else []) + ["Motion Preview"],
-        "models": {"chat": CHAT_MODEL, "runway_text": RUNWAY_TEXT_MODEL, "runway_image": RUNWAY_IMAGE_MODEL},
-        "runway_price": {"text": RUNWAY_PRICE[RUNWAY_TEXT_MODEL], "image": RUNWAY_PRICE[RUNWAY_IMAGE_MODEL]},
+        "video": (["Kling"] if KLING_API_KEY else []) + ["Motion Preview"],
+        "models": {"chat": CHAT_MODEL, "kling": KLING_MODEL},
     }

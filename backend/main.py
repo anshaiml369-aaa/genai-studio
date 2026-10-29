@@ -7,18 +7,20 @@ Run from the GENAI_STUDIO folder:
 
 import json
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import brain
 import config
+import guard
 import media
 import speech
 import studio
 
 app = FastAPI(title="Kalpana · GenAI Studio API")
+guard.install(app, media, studio, brain)   # public-demo limits; a no-op locally
 
 
 # ---------------- Request bodies ----------------
@@ -46,7 +48,8 @@ class StoryRequest(BaseModel):
 # ---------------- API ----------------
 @app.get("/api/status")
 def get_status():
-    return config.status() | {"voices": speech.VOICES, "personalities": list(brain.PERSONALITIES)}
+    return config.status() | {"voices": speech.VOICES, "personalities": list(brain.PERSONALITIES),
+                              "public_demo": guard.PUBLIC}
 
 
 @app.post("/api/chat")
@@ -105,7 +108,7 @@ def image(req: PromptRequest):
 async def create_video(
     mode: str = Form("text"),            # text | image | story
     prompt: str = Form(...),
-    engine: str = Form("auto"),          # auto | runway | motion
+    engine: str = Form("auto"),          # auto | kling | motion
     ratio: str = Form("16:9"),
     seconds: int = Form(5),
     scenes: int = Form(3),
@@ -124,7 +127,7 @@ async def create_video(
         "story": json.loads(story) if story else None,
         "image_bytes": await image.read() if image else None,
     }
-    return {"job_id": studio.start_job(params)}
+    return {"job_id": studio.start_job(params)}   # guard (public demo) records who started it
 
 
 @app.get("/api/jobs/{job_id}")
@@ -135,11 +138,14 @@ def job_status(job_id: str):
 
 
 @app.get("/api/gallery")
-def gallery():
+def gallery(request: Request):
+    who = guard.visitor.get()
+    if guard.PUBLIC:
+        guard.claim_finished_jobs(who)
     items = []
     for kind, folder in (("image", config.IMAGES_DIR), ("video", config.VIDEOS_DIR)):
         for path in folder.iterdir():
-            if path.suffix in (".png", ".jpg", ".mp4"):
+            if path.suffix in (".png", ".jpg", ".mp4") and (not guard.PUBLIC or guard.mine(path.stem, who)):
                 items.append({"type": kind, "url": config.to_url(path), "name": path.stem,
                               "time": path.stat().st_mtime})
     return sorted(items, key=lambda item: item["time"], reverse=True)[:60]
@@ -150,6 +156,8 @@ def delete_item(kind: str, name: str):
     folder = {"image": config.IMAGES_DIR, "video": config.VIDEOS_DIR}.get(kind)
     if not folder or "/" in name or ".." in name:
         raise HTTPException(400, "Bad request")
+    if guard.PUBLIC and not guard.mine(name, guard.visitor.get()):
+        raise HTTPException(403, "You can only delete your own creations.")
     for path in folder.glob(f"{name}.*"):
         path.unlink()
     return {"ok": True}

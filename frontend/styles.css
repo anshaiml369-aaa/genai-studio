@@ -313,7 +313,9 @@ select:focus, input[type=text]:focus, textarea:focus { border-color: var(--viole
 .chip-btn:hover { border-color: var(--violet); }
 .chip-btn .ic { width: 15px; height: 15px; color: var(--saffron); }
 .count { margin-left: auto; }
-.engine-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.engine-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.engine-card.wide { grid-column: 1 / -1; }
+.free-tag { font-style: normal; font-family: "JetBrains Mono", monospace; font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; padding: 2px 6px; margin-left: 6px; border-radius: 999px; color: #0b0b12; background: linear-gradient(90deg, var(--cyan), var(--violet)); vertical-align: 2px; }
 .engine-card { text-align: left; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); transition: border-color .2s, background .2s; }
 .engine-card b { display: block; font-size: .88rem; }
 .engine-card span { display: block; font-size: .72rem; color: var(--muted); line-height: 1.35; margin-top: 4px; }

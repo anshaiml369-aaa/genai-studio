@@ -2,14 +2,15 @@
 media.py - Creates images and videos.
 
 Images:  Gemini  ->  OpenAI (backup)
-Videos:  "runway"  = real AI motion (paid credits)
+Videos:  "kling"   = Kling AI (paid credits, very realistic)
          "motion"  = Motion Preview: an AI image + cinematic camera move (ffmpeg), almost free
-         "auto"    = Runway first, Motion Preview if Runway fails
+         "auto"    = Kling first, Motion Preview if Kling fails
 """
 
 import base64
 import hashlib
 import io
+import json
 import subprocess
 import time
 import urllib.request
@@ -98,41 +99,52 @@ def _fit_image(image_bytes: bytes, width: int, height: int) -> Image.Image:
     return ImageOps.fit(image, (width, height), Image.Resampling.LANCZOS)
 
 
-def _video_runway(prompt, image_bytes, ratio, seconds, on_progress) -> Path:
-    if not config.RUNWAY_API_KEY:
-        raise MediaError("No Runway key in .env")
-    from runwayml import RunwayML
-
-    width, height = config.RATIOS.get(ratio, (1280, 720))
-    runway_ratio = f"{width}:{height}" if ratio != "1:1" else "960:960"
-    client = RunwayML(api_key=config.RUNWAY_API_KEY)
+# ---------- Kling AI (paid) ----------
+def _kling_call(method: str, path: str, payload: dict | None = None) -> dict:
+    request = urllib.request.Request(
+        config.KLING_API + path, method=method,
+        data=json.dumps(payload).encode() if payload else None,
+        headers={"Authorization": f"Bearer {config.KLING_API_KEY}", "Content-Type": "application/json"})
     try:
-        if image_bytes:
-            buffer = io.BytesIO()
-            _fit_image(image_bytes, width, height).save(buffer, format="JPEG", quality=90)
-            data_uri = "data:image/jpeg;base64," + base64.b64encode(buffer.getvalue()).decode()
-            task = client.image_to_video.create(model=config.RUNWAY_IMAGE_MODEL, prompt_image=data_uri,
-                                                prompt_text=prompt[:1000], ratio=runway_ratio,
-                                                duration=seconds)
-        else:
-            task = client.text_to_video.create(model=config.RUNWAY_TEXT_MODEL, prompt_text=prompt[:1000],
-                                               ratio=runway_ratio, duration=seconds)
-    except Exception as error:
-        if "enough credits" in str(error):
-            raise MediaError("Runway has no credits (add them at dev.runwayml.com → Billing)") from error
-        raise MediaError(f"Runway error: {str(error)[:200]}") from error
+        with urllib.request.urlopen(request, timeout=60) as response:
+            answer = json.load(response)
+    except urllib.error.HTTPError as error:
+        answer = json.loads(error.read() or b"{}") or {"message": f"HTTP {error.code}"}
+    if answer.get("code", 0) != 0:
+        message = answer.get("message", "unknown error")
+        if "balance" in message.lower() or "resource pack" in message.lower():
+            message = "no credits (buy a resource pack at app.klingai.com/global/dev)"
+        raise MediaError(f"Kling: {message}")
+    return answer["data"]
 
-    # The video takes 1-3 minutes: ask Runway for the status every 5 seconds
-    task = client.tasks.retrieve(task.id)
-    while task.status in ("PENDING", "THROTTLED", "RUNNING"):
-        on_progress(int((getattr(task, "progress", None) or 0) * 100))
+
+def _video_kling(prompt, image_bytes, ratio, seconds, on_progress) -> Path:
+    if not config.KLING_API_KEY:
+        raise MediaError("No KLING_API_KEY in .env")
+    width, height = config.RATIOS.get(ratio, (1280, 720))
+    payload = {"model_name": config.KLING_MODEL, "prompt": prompt[:2500], "duration": str(seconds),
+               "mode": "std", "aspect_ratio": ratio}
+    if image_bytes:
+        buffer = io.BytesIO()
+        _fit_image(image_bytes, width, height).save(buffer, format="JPEG", quality=90)
+        payload["image"] = base64.b64encode(buffer.getvalue()).decode()
+        kind = "image2video"
+    else:
+        kind = "text2video"
+    task_id = _kling_call("POST", f"/v1/videos/{kind}", payload)["task_id"]
+
+    # Kling takes 1-5 minutes: check every 5 seconds
+    started = time.time()
+    while True:
+        task = _kling_call("GET", f"/v1/videos/{kind}/{task_id}")
+        if task["task_status"] == "succeed":
+            break
+        if task["task_status"] == "failed":
+            raise MediaError(f"Kling could not make this video: {task.get('task_status_msg', '')}")
+        on_progress(min(95, int((time.time() - started) / 3)))
         time.sleep(5)
-        task = client.tasks.retrieve(task.id)
-    if task.status != "SUCCEEDED":
-        raise MediaError(f"Runway could not make this video: {getattr(task, 'failure', task.status)}")
-
     path = _new_file(config.VIDEOS_DIR, "mp4")
-    urllib.request.urlretrieve(task.output[0], path)
+    urllib.request.urlretrieve(task["task_result"]["videos"][0]["url"], path)
     return path
 
 
@@ -173,24 +185,35 @@ def _video_motion(prompt, image_bytes, ratio, seconds, on_progress) -> Path:
     return path
 
 
+ENGINES = {          # name shown in the app : function that makes the video
+    "kling": ("Kling", _video_kling),
+    "motion": ("Motion Preview", _video_motion),
+}
+
+
 def make_video(prompt: str, image_bytes: bytes | None = None, engine: str = "auto",
                ratio: str = "16:9", seconds: int = 5, on_progress=lambda pct: None) -> dict:
     """
-    Returns {"path": Path, "engine": "Runway" / "Motion Preview", "notice": str or None}.
+    Returns {"path": Path, "engine": name, "notice": str or None}.
+    "auto" tries each engine in order and uses the first one that works.
     """
-    if engine in ("auto", "runway") and config.RUNWAY_API_KEY:
-        try:
-            path = _video_runway(prompt, image_bytes, ratio, seconds, on_progress)
-            return {"path": path, "engine": "Runway", "notice": None}
-        except MediaError as error:
-            if engine == "runway":
-                raise
-            notice = f"{error} - made a free Motion Preview instead."
-            print(f"[media] {notice}")
+    if engine == "auto":
+        order = (["kling"] if config.KLING_API_KEY else []) + ["motion"]
     else:
-        notice = None if engine == "motion" else "No Runway key - made a Motion Preview instead."
-    try:
-        path = _video_motion(prompt, image_bytes, ratio, seconds, on_progress)
-    except subprocess.CalledProcessError as error:
-        raise MediaError(f"ffmpeg failed: {error.stderr.decode()[:200]}") from error
-    return {"path": path, "engine": "Motion Preview", "notice": notice}
+        order = [engine if engine in ENGINES else "motion"]
+
+    problems = []
+    for key in order:
+        name, function = ENGINES[key]
+        try:
+            path = function(prompt, image_bytes, ratio, seconds, on_progress)
+        except subprocess.CalledProcessError as error:
+            problems.append(f"ffmpeg failed: {error.stderr.decode()[:150]}")
+            continue
+        except Exception as error:
+            problems.append(str(error)[:200])
+            print(f"[media] {name} failed: {str(error)[:200]}")
+            continue
+        notice = f"{problems[-1]} - used {name} instead." if problems else None
+        return {"path": path, "engine": name, "notice": notice}
+    raise MediaError(problems[-1] if problems else "No video engine available.")

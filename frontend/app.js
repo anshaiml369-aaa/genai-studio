@@ -45,7 +45,7 @@ async function loadStatus() {
 
   const pills = [
     ["Chat", STATUS.chat], ["Voice", !!STATUS.voice_in], ["Images", STATUS.image.length > 0],
-    ["Video", true], ["Runway", STATUS.video.includes("Runway")],
+    ["Video", true], ["Kling", STATUS.video.includes("Kling")],
   ];
   $("#hero-status").innerHTML = pills.map(([name, on]) =>
     `<span class="status-pill ${on ? "" : "off"}"><i></i>${name}</span>`).join("");
@@ -60,7 +60,7 @@ async function loadStatus() {
     $(sel).innerHTML = STATUS.voices.map((v) => `<option value="${v}">${v[0].toUpperCase() + v.slice(1)}</option>`).join("");
   }
   restoreSettings();
-  if (!STATUS.video.includes("Runway")) $('[data-engine="runway"]').classList.add("disabled");
+  if (!STATUS.video.includes("Kling")) $('[data-engine="kling"]').classList.add("disabled");
   updateCost();
 }
 
@@ -542,12 +542,9 @@ const IDEAS = [
 function updateCost() {
   if (!STATUS) return;
   const scenes = studio.mode === "story" ? +$("#scenes").value : 1;
-  const price = studio.mode === "image" ? STATUS.runway_price.image : STATUS.runway_price.text;
-  const runway = price * studio.seconds * scenes;
   const motion = 0.01 * scenes;
-  const text = studio.engine === "motion" ? `~$${motion.toFixed(2)}`
-    : studio.engine === "runway" ? `~$${runway.toFixed(2)}`
-    : STATUS.video.includes("Runway") ? `~$${runway.toFixed(2)}` : `~$${motion.toFixed(2)}`;
+  const kling = studio.engine === "kling" || (studio.engine === "auto" && STATUS.video.includes("Kling"));
+  const text = kling ? "Kling credits" : `~$${motion.toFixed(2)}`;
   $("#cost").textContent = `· ${text}`;
 }
 
@@ -707,7 +704,10 @@ function setupStudio() {
   $("#engine-cards").addEventListener("click", (e) => {
     const b = e.target.closest(".engine-card");
     if (!b) return;
-    if (b.classList.contains("disabled")) { toast("Add a RUNWAY_API_KEY in .env to use Runway."); return; }
+    if (b.classList.contains("disabled")) {
+      toast("Add a KLING_API_KEY in .env to use Kling.");
+      return;
+    }
     studio.engine = b.dataset.engine;
     $$(".engine-card").forEach((c) => c.classList.toggle("active", c === b));
     updateCost();

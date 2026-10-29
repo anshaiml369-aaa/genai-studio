@@ -6,7 +6,7 @@ to create an image or a video. Everything is sent to the browser as small
 JSON "events" (Server-Sent Events), e.g.
     {"type": "text",  "delta": "Hello"}
     {"type": "image", "url": "/media/images/..png", "engine": "OpenAI"}
-    {"type": "video", "url": "/media/videos/..mp4", "engine": "Runway"}
+    {"type": "video", "url": "/media/videos/..mp4", "engine": "Kling"}
 """
 
 import base64
